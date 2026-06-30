@@ -1,0 +1,225 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ──── User & Auth ────
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      Role     @default(EDITOR)
+  apiToken  String?  @unique
+  posts     Post[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR
+}
+
+// ──── Category ────
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  order     Int      @default(0)
+  page      Page?
+  posts     Post[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ──── Page ────
+
+model Page {
+  id          String     @id @default(cuid())
+  title       String
+  content     String?
+  categoryId  String?    @unique
+  category    Category?  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  styleId     String?
+  style       Style?     @relation(fields: [styleId], references: [id], onDelete: SetNull)
+  status      PageStatus @default(PUBLISHED)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  referenceImages PageImage[]
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model PageImage {
+  id        String   @id @default(cuid())
+  pageId    String
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  url       String
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ──── Post ────
+
+model Post {
+  id          String     @id @default(cuid())
+  title       String
+  slug        String
+  content     String
+  excerpt     String?
+  categoryId  String
+  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  authorId    String
+  author      User       @relation(fields: [authorId], references: [id])
+  aiGenerated    Boolean  @default(false)
+  extendedParams String?  // JSON string, processed by add_page hook
+  tags           String?
+  tags_rel    PostTag[]
+  status      PostStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  images PostImage[]
+
+  @@unique([categoryId, slug])
+}
+
+enum PostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+model PostImage {
+  id        String   @id @default(cuid())
+  postId    String
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  url       String
+  altText   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ──── Tag ────
+
+model Tag {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  slug      String    @unique
+  postCount Int       @default(0)
+  posts     PostTag[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+// ──── Content Version (polymorphic: contentId field is either post.id or page.id) ────
+
+model ContentVersion {
+  id            String   @id @default(cuid())
+  contentType   String   // "post" or "page"
+  contentId     String
+  versionNumber Int
+  title         String
+  content       String
+  excerpt       String?
+  tags          String?
+  description   String?
+  authorId      String
+  createdAt     DateTime @default(now())
+
+  @@unique([contentType, contentId, versionNumber])
+}
+
+// ──── I18n ────
+
+model Translation {
+  id               String   @id @default(cuid())
+  translatableType String
+  translatableId   String
+  locale           String
+  title            String
+  content          String?
+  excerpt          String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@unique([translatableType, translatableId, locale])
+}
+
+model SiteLanguage {
+  id             String   @id @default(cuid())
+  defaultLocale  String
+  enabledLocales Json
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ──── Style ────
+
+model Style {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  mdContent String
+  compiled  Json?
+  isBuiltin Boolean  @default(false)
+  pages     Page[]
+  createdAt DateTime @default(now())
+}
+
+// ──── Plugin ────
+
+model Plugin {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  version     String   @default("1.0.0")
+  author      String?
+  enabled     Boolean  @default(false)
+  config      Json?
+  hooks       Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ──── Settings ────
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @default(now())
+}
+
+// ──── Media ────
+
+model Media {
+  id        String   @id @default(cuid())
+  filename  String
+  url       String
+  mimeType  String
+  size      Int
+  createdAt DateTime @default(now())
+}

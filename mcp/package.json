@@ -1,0 +1,11 @@
+{
+  "name": "cms-mcp",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "cms-mcp": "./server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  }
+}

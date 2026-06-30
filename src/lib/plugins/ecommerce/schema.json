@@ -1,0 +1,38 @@
+{
+  "statements": [
+    "CREATE TABLE IF NOT EXISTS Product (id TEXT PRIMARY KEY, title TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, description TEXT, content TEXT, price REAL, originalPrice REAL, stock INTEGER DEFAULT 0, paymentMode TEXT NOT NULL DEFAULT 'wechat', buyLink TEXT, productCode TEXT, sku TEXT, quantity INTEGER DEFAULT 1, status TEXT NOT NULL DEFAULT 'DRAFT', visibility TEXT NOT NULL DEFAULT 'VISIBLE', categoryId TEXT, authorId TEXT NOT NULL, images TEXT, aiGenerated INTEGER DEFAULT 0, tags TEXT, publishedAt TEXT, sort INTEGER DEFAULT 0, createdAt TEXT NOT NULL DEFAULT (datetime('now')), updatedAt TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS ProductAttributeTemplate (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL, attrValues TEXT, filterable INTEGER DEFAULT 0, sort INTEGER DEFAULT 0, createdAt TEXT NOT NULL DEFAULT (datetime('now')), updatedAt TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS ProductAttributeValue (id TEXT PRIMARY KEY, productId TEXT NOT NULL, templateId TEXT NOT NULL, attrValue TEXT NOT NULL, createdAt TEXT NOT NULL DEFAULT (datetime('now')), FOREIGN KEY (productId) REFERENCES Product(id) ON DELETE CASCADE, FOREIGN KEY (templateId) REFERENCES ProductAttributeTemplate(id) ON DELETE CASCADE)",
+    "CREATE TABLE IF NOT EXISTS AfterSalesOrder (id TEXT PRIMARY KEY, type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'PENDING', description TEXT, images TEXT, contactName TEXT, contactPhone TEXT, pickupAddress TEXT, pickupTime TEXT, trackingNo TEXT, originalPrice REAL, calculatedFee REAL, paidFee REAL, paymentRecordId TEXT, productId TEXT, authorId TEXT NOT NULL, createdAt TEXT NOT NULL DEFAULT (datetime('now')), updatedAt TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS AfterSalesPricingRule (id TEXT PRIMARY KEY, type TEXT NOT NULL, baseFee REAL DEFAULT 0, rate REAL DEFAULT 0, formula TEXT, enabled INTEGER DEFAULT 1, createdAt TEXT NOT NULL DEFAULT (datetime('now')), updatedAt TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS PaymentRecord (id TEXT PRIMARY KEY, outTradeNo TEXT NOT NULL UNIQUE, transactionId TEXT, amount REAL NOT NULL, currency TEXT DEFAULT 'CNY', status TEXT NOT NULL DEFAULT 'PENDING', payType TEXT NOT NULL DEFAULT 'NATIVE', orderType TEXT NOT NULL, orderId TEXT NOT NULL, qrCodeUrl TEXT, h5PayUrl TEXT, expireAt TEXT, paidAt TEXT, rawNotify TEXT, createdAt TEXT NOT NULL DEFAULT (datetime('now')), updatedAt TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS OrderInfo (id TEXT PRIMARY KEY, outTradeNo TEXT, productId TEXT NOT NULL, productSnap TEXT, quantity INTEGER DEFAULT 1, amount REAL NOT NULL, deliveryInfo TEXT, trackingNo TEXT, status TEXT NOT NULL DEFAULT 'PENDING', authorId TEXT NOT NULL, createdAt TEXT NOT NULL DEFAULT (datetime('now')), updatedAt TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE TABLE IF NOT EXISTS ProductCategory (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, sort INTEGER DEFAULT 0, createdAt TEXT NOT NULL DEFAULT (datetime('now')), updatedAt TEXT NOT NULL DEFAULT (datetime('now')))",
+    "CREATE INDEX IF NOT EXISTS idx_product_status ON Product(status)",
+    "CREATE INDEX IF NOT EXISTS idx_product_category ON Product(categoryId)",
+    "CREATE INDEX IF NOT EXISTS idx_attr_value_product ON ProductAttributeValue(productId)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_attr_value_unique ON ProductAttributeValue(productId, templateId)",
+    "CREATE INDEX IF NOT EXISTS idx_payment_out_trade_no ON PaymentRecord(outTradeNo)",
+    "CREATE INDEX IF NOT EXISTS idx_payment_order ON PaymentRecord(orderType, orderId)",
+    "CREATE INDEX IF NOT EXISTS idx_order_status ON OrderInfo(status)",
+    "CREATE INDEX IF NOT EXISTS idx_aftersales_status ON AfterSalesOrder(status)",
+    "CREATE INDEX IF NOT EXISTS idx_product_cat_slug ON ProductCategory(slug)"
+  ],
+  "migrations": [
+    "ALTER TABLE Product ADD COLUMN content TEXT",
+    "ALTER TABLE Product ADD COLUMN originalPrice REAL",
+    "ALTER TABLE Product ADD COLUMN sku TEXT",
+    "ALTER TABLE Product ADD COLUMN aiGenerated INTEGER DEFAULT 0",
+    "ALTER TABLE Product ADD COLUMN tags TEXT",
+    "ALTER TABLE Product ADD COLUMN publishedAt TEXT",
+    "ALTER TABLE AfterSalesOrder ADD COLUMN pickupTime TEXT",
+    "ALTER TABLE AfterSalesOrder ADD COLUMN trackingNo TEXT",
+    "ALTER TABLE AfterSalesPricingRule ADD COLUMN formula TEXT",
+    "ALTER TABLE AfterSalesPricingRule ADD COLUMN enabled INTEGER DEFAULT 1",
+    "ALTER TABLE PaymentRecord ADD COLUMN currency TEXT DEFAULT 'CNY'",
+    "ALTER TABLE PaymentRecord ADD COLUMN qrCodeUrl TEXT",
+    "ALTER TABLE PaymentRecord ADD COLUMN h5PayUrl TEXT",
+    "ALTER TABLE PaymentRecord ADD COLUMN rawNotify TEXT",
+    "ALTER TABLE OrderInfo ADD COLUMN trackingNo TEXT"
+  ]
+}
