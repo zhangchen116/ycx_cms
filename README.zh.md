@@ -74,10 +74,7 @@ cms/
 │       ├── plugin-loader.ts # 插件动态加载器
 │       ├── prisma.ts        # Prisma 单例
 │       └── plugins/         # 内置插件
-│           ├── ecommerce/   # 电商插件
-│           ├── analytics/   # 数据统计
-│           ├── contact-form/# 联系表单
-│           └── search/      # 搜索
+│          
 ├── mcp/                     # MCP Server (AI Agent 接入)
 │   └── server.js            # 30+ 工具定义
 ├── doc/                     # 项目文档
@@ -172,17 +169,7 @@ CMS_API_URL=http://localhost:3000/
 CMS_API_TOKEN=<用户的 API Token>
 ```
 
-### 6. 电商插件 (E-Commerce)
-
-内置插件，提供完整电商能力：
-
-- 商品管理 (CRUD + 批量上下架 + 属性筛选)
-- 商品占位符 (商品卡片 / 网格 / 购买按钮 / 筛选器)
-- 售后系统 (提交 → 费用计算 → 支付 → 跟踪)
-- 支付适配器 (微信支付 stub，可扩展)
-- `add_page` 钩子：创建帖子时自动入库商品
-
-### 7. 权限系统
+### 6. 权限系统
 
 三级角色：`SUPER_ADMIN` > `ADMIN` > `EDITOR`
 

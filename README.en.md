@@ -74,10 +74,7 @@ cms/
 │       ├── plugin-loader.ts # Plugin dynamic loader
 │       ├── prisma.ts        # Prisma singleton
 │       └── plugins/         # Built-in plugins
-│           ├── ecommerce/   # E-Commerce plugin
-│           ├── analytics/   # Analytics
-│           ├── contact-form/# Contact form
-│           └── search/      # Search
+│           
 ├── mcp/                     # MCP Server (AI Agent gateway)
 │   └── server.js            # 30+ tool definitions
 ├── doc/                     # Project documentation
@@ -171,16 +168,6 @@ Environment:
 CMS_API_URL=http://localhost:3000/
 CMS_API_TOKEN=<user API token>
 ```
-
-### 6. E-Commerce Plugin
-
-Built-in plugin with full e-commerce capabilities:
-
-- Product management (CRUD + batch publish/unpublish + attribute filtering)
-- Product placeholders (Product card / grid / buy button / filter)
-- After-sales system (Submit → fee calculation → payment → tracking)
-- Payment adapter (WeChat Pay stub, extensible)
-- `add_page` hook: Auto-create product when creating a post
 
 ### 7. Permission System
 

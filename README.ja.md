@@ -74,10 +74,7 @@ cms/
 │       ├── plugin-loader.ts # プラグイン動的ローダー
 │       ├── prisma.ts        # Prisma シングルトン
 │       └── plugins/         # 組み込みプラグイン
-│           ├── ecommerce/   # EC プラグイン
-│           ├── analytics/   # 分析
-│           ├── contact-form/# お問い合わせフォーム
-│           └── search/      # 検索
+│          
 ├── mcp/                     # MCP Server (AI エージェントゲートウェイ)
 │   └── server.js            # 30+ ツール定義
 ├── doc/                     # プロジェクトドキュメント
@@ -172,17 +169,7 @@ CMS_API_URL=http://localhost:3000/
 CMS_API_TOKEN=<ユーザー API トークン>
 ```
 
-### 6. EC プラグイン
-
-組み込みプラグイン、完全な EC 機能を提供：
-
-- 商品管理 (CRUD + バッチ公開/非公開 + 属性フィルタリング)
-- 商品プレースホルダ (商品カード / グリッド / 購入ボタン / フィルター)
-- アフターセールスシステム (申請 → 料金計算 → 支払い → 追跡)
-- 支払いアダプター (WeChat Pay スタブ、拡張可能)
-- `add_page` フック: 記事作成時に商品を自動登録
-
-### 7. 権限システム
+### 6. 権限システム
 
 3 段階ロール: `SUPER_ADMIN` > `ADMIN` > `EDITOR`
 
