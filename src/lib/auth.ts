@@ -67,7 +67,8 @@ export async function setSessionCookie(payload: SessionPayload): Promise<void> {
   const store = await cookies();
   store.set(COOKIE_NAME, token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: process.env.NODE_ENV === "production" && process.env.USE_HTTPS !== "false",
+    sameSite: "lax", // 建议添加
     path: "/",
     maxAge: 60 * 60 * 24 * 7,
   });
