@@ -105,15 +105,16 @@ CMS 页面支持**动态占位符 HTML**——上传的 HTML 中含有特殊 `da
 ### 工作流一：更新首页
 
 ```
-1. cms_get_page_schema              → 了解可用占位符和示例
-2. 生成 HTML 模板（含 data-cms-*）   → AI 根据站点需求编写模板
-3. cms_upload_media (可选)           → 上传配图，获取 URL 嵌入模板
-4. cms_upload_page_html {            → 上传 HTML 到首页
+1. cms_get_page_schema              → 了解占位符和示例
+2. cms_get_placeholder_rules				→ 获取插件占位符使用规则
+3. 生成 HTML 模板（含 data-cms-*）   → AI 根据站点需求编写模板
+4. cms_upload_media (可选)           → 上传配图，获取 URL 嵌入模板
+5. cms_upload_page_html {            → 上传 HTML 到首页
      pageId: "<首页Page ID>",
      filePath: "/path/to/homepage.html",
      title: "首页"
    }
-5. cms_render_page { pageId: "..." } → 预览渲染效果，确认无误
+6. cms_render_page { pageId: "..." } → 预览渲染效果，确认无误
 ```
 
 > 首页 Page ID 可通过 `cms_site_info` 或 `cms_get_homepage` 获取。
@@ -122,14 +123,15 @@ CMS 页面支持**动态占位符 HTML**——上传的 HTML 中含有特殊 `da
 
 ```
 1. cms_list_categories              → 获取目标分类的 ID 和 pageId
-2. cms_get_page_schema              → 了解可用占位符
-3. 生成 HTML 模板                    → 通常包含 data-cms-posts (该分类文章列表)
-4. cms_upload_page_html {            → 上传到该分类关联的页面
+2. cms_get_page_schema              → 了解占位符和示例
+3. cms_get_placeholder_rules				→ 获取插件占位符使用规则
+4. 生成 HTML 模板                    → 通常包含 data-cms-posts (该分类文章列表)
+5. cms_upload_page_html {            → 上传到该分类关联的页面
      pageId: "<分类的pageId>",
      filePath: "/path/to/category.html",
      title: "<分类名称>"
    }
-5. cms_render_page { pageId: "..." } → 预览渲染效果
+6. cms_render_page { pageId: "..." } → 预览渲染效果
 ```
 
 > 分类页面模板通常使用 `data-cms-posts data-category="<slug>"` 来自动渲染该分类下的文章。

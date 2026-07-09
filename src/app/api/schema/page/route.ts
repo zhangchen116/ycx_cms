@@ -57,13 +57,13 @@ export async function GET() {
         },
         example: `
 <div data-cms-posts data-category="tech" data-limit="5">
-  <article class="post-item">
-    <a data-cms-bind="post.link">
+  <a data-cms-bind="post.link">
+    <article class="post-item">
       <h3 data-cms-bind="post.title">文章标题</h3>
-    </a>
-    <p data-cms-bind="post.excerpt">摘要内容</p>
-    <time data-cms-bind="post.date">2024-01-01</time>
-  </article>
+      <p data-cms-bind="post.excerpt">摘要内容</p>
+      <time data-cms-bind="post.date">2024-01-01</time>
+    </article>
+  </a>
 </div>`,
       },
 
