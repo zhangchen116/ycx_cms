@@ -130,11 +130,13 @@ async function main() {
   });
 
   // ──── Homepage Page ────
-  let homepagePage = await prisma.page.findFirst({ where: { categoryId: null } });
+  let homepagePage = await prisma.page.findFirst({ where: { slug: "home" } });
   if (!homepagePage) {
     homepagePage = await prisma.page.create({
       data: {
         title: "AI CMS",
+        slug: "home",
+        type: "STANDALONE",
         status: "PUBLISHED",
         publishedAt: new Date(),
       },

@@ -55,12 +55,16 @@ export const POST = withLogging(async (req: Request) => {
       return NextResponse.json({ error: "URL 标识已存在" }, { status: 409 });
     }
 
+    // new category goes to the end of the list
+    const maxOrder = await prisma.category.aggregate({ _max: { order: true } });
+    const newOrder = (maxOrder._max.order ?? -1) + 1;
+
     // 创建分类 → 自动创建默认页面
     const category = await prisma.category.create({
       data: {
         name,
         slug: finalSlug,
-        order: order ?? 0,
+        order: order ?? newOrder,
         page: {
           create: {
             title: name,

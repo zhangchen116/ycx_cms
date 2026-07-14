@@ -14,6 +14,7 @@ const NAV = [
   { href: "/admin", label: "仪表盘" },
   { href: "/admin/homepage", label: "首页" },
   { href: "/admin/categories", label: "分类" },
+  { href: "/admin/pages", label: "独立页" },
   { href: "/admin/posts", label: "帖子" },
   { href: "/admin/tags", label: "标签" },
   { href: "/admin/skills", label: "技能管理" },

@@ -10,6 +10,8 @@ import { withLogging } from "@/lib/api-logger";
 const updateSchema = z.object({
   title: z.string().min(1).optional(),
   content: z.string().optional(),
+  slug: z.string().min(1).optional(),
+  type: z.enum(["CATEGORY", "STANDALONE"]).optional(),
   styleId: z.string().optional().nullable(),
   status: z.enum(["DRAFT", "PUBLISHED"]).optional(),
 });
@@ -67,6 +69,27 @@ export const PATCH = withLogging(
     const page = await prisma.page.update({ where: { id }, data });
     return NextResponse.json(page);
   } catch (err: any) {
+    if (err?.code === "P2002") {
+      return NextResponse.json({ error: "URL 标识已存在" }, { status: 409 });
+    }
     return NextResponse.json({ error: `更新失败: ${err?.message || "未知错误"}` }, { status: 500 });
   }
 });
+
+export const DELETE = withLogging(
+  async (
+    _req: Request,
+    { params }: { params: Promise<{ id: string }> }
+  ) => {
+    const session = await getSessionFromRequest(_req);
+    if (!session) return getAuthErrorResponse();
+
+    const { id } = await params;
+    try {
+      await prisma.page.delete({ where: { id } });
+      return NextResponse.json({ success: true });
+    } catch (err: any) {
+      return NextResponse.json({ error: `删除失败: ${err?.message || "未知错误"}` }, { status: 500 });
+    }
+  }
+);

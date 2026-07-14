@@ -3,13 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import CodeMirrorEditor from "@/components/CodeMirrorEditor";
 
-interface Category {
+interface Page {
   id: string;
-  name: string;
+  title: string;
   slug: string;
-  order: number;
-  _count: { posts: number };
-  page?: { id: string; title: string; status: string; styleId?: string | null } | null;
+  type: string;
+  status: string;
+  content?: string | null;
+  styleId?: string | null;
+  style?: { id: string; name: string } | null;
 }
 
 interface Style {
@@ -19,35 +21,39 @@ interface Style {
 
 type PageEditorTab = "settings" | "source";
 
-export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
+export default function StandalonePagesPage() {
+  const [pages, setPages] = useState<Page[]>([]);
   const [styles, setStyles] = useState<Style[]>([]);
   const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
+  const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [loading, setLoading] = useState(false);
+  const [homepageId, setHomepageId] = useState<string | null>(null);
 
-  const fetchCategories = () =>
-    fetch("/api/categories").then((r) => r.json()).then(setCategories);
+  const fetchPages = () =>
+    fetch("/api/pages?type=STANDALONE").then((r) => r.json()).then(setPages);
 
   useEffect(() => {
-    fetchCategories();
+    fetchPages();
     fetch("/api/styles").then((r) => r.json()).then(setStyles);
+    fetch("/api/homepage").then((r) => r.json())
+      .then((data) => setHomepageId(data?.id || null));
   }, []);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!title.trim() || !slug.trim()) return;
     setLoading(true);
-    const res = await fetch("/api/categories", {
+    const res = await fetch("/api/pages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, slug: slug || undefined }),
+      body: JSON.stringify({ title, slug, type: "STANDALONE" }),
     });
     if (res.ok) {
-      setName("");
+      setTitle("");
       setSlug("");
       setShowForm(false);
-      fetchCategories();
+      fetchPages();
     } else {
       const err = await res.json();
       alert(err.error || "创建失败");
@@ -56,29 +62,20 @@ export default function CategoriesPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("确定删除该分类及其所有内容？")) return;
-    await fetch(`/api/categories/${id}`, { method: "DELETE" });
-    fetchCategories();
-  };
-
-  const handleReorder = async (id: string, direction: "up" | "down") => {
-    await fetch("/api/categories/reorder", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, direction }),
-    });
-    fetchCategories();
+    if (!confirm("确定删除该独立页？")) return;
+    await fetch(`/api/pages/${id}`, { method: "DELETE" });
+    fetchPages();
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">分类管理</h1>
+        <h1 className="text-2xl font-bold">独立页管理</h1>
         <button
           onClick={() => setShowForm(!showForm)}
           className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
         >
-          {showForm ? "取消" : "新建分类"}
+          {showForm ? "取消" : "新建独立页"}
         </button>
       </div>
 
@@ -86,23 +83,24 @@ export default function CategoriesPage() {
         <form onSubmit={handleCreate} className="bg-white rounded-lg p-4 mb-6 shadow-sm">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium mb-1">名称 *</label>
+              <label className="block text-sm font-medium mb-1">标题 *</label>
               <input
                 type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 className="w-full border rounded px-3 py-2 text-sm"
                 required
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-1">URL 标识</label>
+              <label className="block text-sm font-medium mb-1">URL 标识 *</label>
               <input
                 type="text"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
-                placeholder="留空自动生成"
+                placeholder="如 user-notice"
                 className="w-full border rounded px-3 py-2 text-sm"
+                required
               />
             </div>
           </div>
@@ -120,60 +118,64 @@ export default function CategoriesPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="text-left px-4 py-2">名称</th>
+              <th className="text-left px-4 py-2">标题</th>
               <th className="text-left px-4 py-2">URL</th>
-              <th className="text-left px-4 py-2">页面标题</th>
-              <th className="text-left px-4 py-2">帖子数</th>
+              <th className="text-left px-4 py-2">状态</th>
+              <th className="text-left px-4 py-2">样式</th>
               <th className="text-right px-4 py-2">操作</th>
             </tr>
           </thead>
           <tbody>
-            {categories.map((c) => (
-              <tr key={c.id} className="border-t">
-                <td className="px-4 py-2 font-medium">{c.name}</td>
-                <td className="px-4 py-2 text-gray-500">/{c.slug}</td>
-                <td className="px-4 py-2 text-gray-500">{c.page?.title || "-"}</td>
-                <td className="px-4 py-2">{c._count.posts}</td>
-                <td className="px-4 py-2 text-right space-x-1">
-                  <button
-                    onClick={() => handleReorder(c.id, "up")}
-                    className="text-gray-400 hover:text-gray-700 text-xs px-1"
-                    title="上移"
+            {pages.map((p) => (
+              <tr key={p.id} className="border-t">
+                <td className="px-4 py-2 font-medium">{p.title}</td>
+                <td className="px-4 py-2 text-gray-500">
+                  <a
+                    href={`/page/${p.slug}`}
+                    target="_blank"
+                    className="text-blue-600 hover:underline"
                   >
-                    ↑
-                  </button>
-                  <button
-                    onClick={() => handleReorder(c.id, "down")}
-                    className="text-gray-400 hover:text-gray-700 text-xs px-1"
-                    title="下移"
+                    /page/{p.slug}
+                  </a>
+                </td>
+                <td className="px-4 py-2">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded ${
+                      p.status === "PUBLISHED"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
                   >
-                    ↓
-                  </button>
-                  {c.page && (
-                    <PageEditor
-                      pageId={c.page.id}
-                      pageTitle={c.page.title}
-                      pageStatus={c.page.status}
-                      styleId={c.page.styleId}
-                      styles={styles}
-                      categoryId={c.id}
-                      categoryName={c.name}
-                      categorySlug={c.slug}
-                      onUpdated={fetchCategories}
-                    />
+                    {p.status === "PUBLISHED" ? "已发布" : "草稿"}
+                  </span>
+                </td>
+                <td className="px-4 py-2 text-gray-500">{p.style?.name || "默认"}</td>
+                <td className="px-4 py-2 text-right space-x-2">
+                  {p.id === homepageId ? (
+                    <span className="text-xs text-gray-400">系统首页</span>
+                  ) : (
+                    <>
+                      <StandalonePageEditor
+                        page={p}
+                        styles={styles}
+                        onUpdated={fetchPages}
+                      />
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        className="text-red-600 hover:underline text-xs"
+                      >
+                        删除
+                      </button>
+                    </>
                   )}
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    className="text-red-600 hover:underline text-xs"
-                  >
-                    删除
-                  </button>
                 </td>
               </tr>
             ))}
-            {categories.length === 0 && (
+            {pages.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">暂无分类</td>
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                  暂无独立页，点击"新建独立页"创建
+                </td>
               </tr>
             )}
           </tbody>
@@ -185,34 +187,23 @@ export default function CategoriesPage() {
 
 /* ---- Page Editor Modal ---- */
 
-function PageEditor({
-  pageId,
-  pageTitle,
-  pageStatus,
-  styleId: initialStyleId,
+function StandalonePageEditor({
+  page,
   styles,
-  categoryId,
-  categoryName,
-  categorySlug,
   onUpdated,
 }: {
-  pageId: string;
-  pageTitle: string;
-  pageStatus: string;
-  styleId?: string | null;
+  page: Page;
   styles: Style[];
-  categoryId: string;
-  categoryName: string;
-  categorySlug: string;
   onUpdated: () => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [title, setTitle] = useState(pageTitle);
-  const [status, setStatus] = useState(pageStatus);
-  const [styleId, setStyleId] = useState(initialStyleId ?? "");
+  const [title, setTitle] = useState(page.title);
+  const [slug, setSlugState] = useState(page.slug);
+  const [status, setStatus] = useState(page.status);
+  const [styleId, setStyleId] = useState(page.styleId ?? "");
   const [saving, setSaving] = useState(false);
 
-  // Source code editing
+  // Source editing
   const [content, setContent] = useState("");
   const [contentLoaded, setContentLoaded] = useState(false);
   const [tab, setTab] = useState<PageEditorTab>("settings");
@@ -227,37 +218,30 @@ function PageEditor({
 
   const handleOpen = useCallback(() => {
     setOpen(true);
-    setTitle(pageTitle);
-    setStatus(pageStatus);
-    setStyleId(initialStyleId ?? "");
+    setTitle(page.title);
+    setSlugState(page.slug);
+    setStatus(page.status);
+    setStyleId(page.styleId ?? "");
     setAiOpen(false);
     setAiStatus("");
     setAiError("");
     setTab("settings");
     setContentLoaded(false);
-    // Fetch full page data for content
-    fetch(`/api/pages?categoryId=${categoryId}`)
+    fetch(`/api/pages/${page.id}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data?.content != null) {
-          setContent(data.content);
-        } else {
-          setContent("");
-        }
+        setContent(data.content ?? "");
         setContentLoaded(true);
       })
-      .catch(() => {
-        setContent("");
-        setContentLoaded(true);
-      });
-  }, [pageTitle, pageStatus, initialStyleId, categoryId]);
+      .catch(() => setContentLoaded(true));
+  }, [page]);
 
   const handleSave = async () => {
     setSaving(true);
-    await fetch(`/api/pages/${pageId}`, {
+    await fetch(`/api/pages/${page.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, status, styleId: styleId || null }),
+      body: JSON.stringify({ title, slug, status, styleId: styleId || null }),
     });
     setSaving(false);
     setOpen(false);
@@ -266,7 +250,7 @@ function PageEditor({
 
   const handleSaveSource = async () => {
     setSaving(true);
-    const res = await fetch(`/api/pages/${pageId}`, {
+    const res = await fetch(`/api/pages/${page.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ content }),
@@ -294,7 +278,7 @@ function PageEditor({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          categoryId,
+          pageId: page.id,
           requirements,
           referenceImageUrls: refUrls.length > 0 ? refUrls : undefined,
         }),
@@ -326,6 +310,7 @@ function PageEditor({
                 break;
               case "done":
                 if (data.pageTitle) setTitle(data.pageTitle);
+                if (data.content) setContent(data.content);
                 setAiStatus("生成完成！");
                 onUpdated();
                 break;
@@ -333,9 +318,7 @@ function PageEditor({
                 setAiError(data.message || "生成失败");
                 break;
             }
-          } catch {
-            // skip unparseable
-          }
+          } catch { /* skip */ }
         }
       }
     } catch (err: unknown) {
@@ -359,7 +342,7 @@ function PageEditor({
   if (!open) {
     return (
       <button onClick={handleOpen} className="text-blue-600 hover:underline text-xs">
-        编辑页面
+        编辑
       </button>
     );
   }
@@ -367,19 +350,17 @@ function PageEditor({
   return (
     <>
       <button onClick={handleOpen} className="text-blue-600 hover:underline text-xs">
-        编辑页面
+        编辑
       </button>
 
-      {/* Modal */}
       <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
         <div className="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 max-h-[90vh] overflow-auto">
           <div className="p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-bold">编辑页面 - {categoryName}</h2>
+              <h2 className="text-lg font-bold">编辑独立页</h2>
               <button onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
             </div>
 
-            {/* Tabs */}
             <div className="flex gap-0 mb-4 border-b">
               <button className={tabClass("settings")} onClick={() => setTab("settings")}>
                 基本设置
@@ -389,7 +370,6 @@ function PageEditor({
               </button>
             </div>
 
-            {/* Tab: 基本设置 */}
             {tab === "settings" && (
               <>
                 <div className="space-y-4">
@@ -398,6 +378,14 @@ function PageEditor({
                     <input
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
+                      className="w-full border rounded px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">URL 标识</label>
+                    <input
+                      value={slug}
+                      onChange={(e) => setSlugState(e.target.value)}
                       className="w-full border rounded px-3 py-2 text-sm"
                     />
                   </div>
@@ -429,19 +417,34 @@ function PageEditor({
                     </div>
                   </div>
 
-                  {/* AI Generate */}
-                  {!aiOpen ? (
-                    <button
-                      onClick={() => setAiOpen(true)}
-                      className="text-purple-600 text-sm hover:underline"
+                  <div className="flex gap-2">
+                    <a
+                      href={`/page/${page.slug}`}
+                      target="_blank"
+                      className="px-3 py-1.5 border rounded text-sm text-gray-600 hover:bg-gray-50"
                     >
-                      🤖 AI 生成页面内容
-                    </button>
-                  ) : (
+                      预览 →
+                    </a>
+                    {!aiOpen && (
+                      <button
+                        onClick={() => setAiOpen(true)}
+                        className="text-purple-600 text-sm hover:underline"
+                      >
+                        🤖 AI 生成页面内容
+                      </button>
+                    )}
+                  </div>
+
+                  {aiOpen && (
                     <div className="border rounded p-3 bg-purple-50 space-y-3">
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium text-purple-700">AI 生成</span>
-                        <button onClick={() => { setAiOpen(false); handleCancelAI(); }} className="text-xs text-gray-500 hover:underline">收起</button>
+                        <button
+                          onClick={() => { setAiOpen(false); handleCancelAI(); }}
+                          className="text-xs text-gray-500 hover:underline"
+                        >
+                          收起
+                        </button>
                       </div>
                       <div>
                         <label className="block text-xs text-gray-600 mb-1">生成要求</label>
@@ -500,20 +503,9 @@ function PageEditor({
               </>
             )}
 
-            {/* Tab: 源码编辑 */}
             {tab === "source" && (
               <>
                 <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        window.open(`/${categorySlug}`, "_blank");
-                      }}
-                      className="px-3 py-1.5 border rounded text-sm text-gray-600 hover:bg-gray-50"
-                    >
-                      预览 →
-                    </button>
-                  </div>
                   {contentLoaded ? (
                     <CodeMirrorEditor
                       value={content}

@@ -46,6 +46,8 @@ model Page {
   id          String     @id @default(cuid())
   title       String
   content     String?
+  slug        String?    @unique
+  type        PageType   @default(CATEGORY)
   categoryId  String?    @unique
   category    Category?  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   styleId     String?
@@ -56,6 +58,11 @@ model Page {
   updatedAt   DateTime   @updatedAt
 
   referenceImages PageImage[]
+}
+
+enum PageType {
+  CATEGORY
+  STANDALONE
 }
 
 enum PageStatus {
