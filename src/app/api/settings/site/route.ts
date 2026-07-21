@@ -14,6 +14,7 @@ export const GET = withLogging(async (req: NextRequest) => {
   return NextResponse.json({
     domain: domain?.value || "",
     port: port?.value || "",
+    aiEnabled: process.env.AI_ENABLED !== "false",
   });
 });
 

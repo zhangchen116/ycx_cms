@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import CodeMirrorEditor from "@/components/CodeMirrorEditor";
+import { useAIEnabled } from "@/lib/useAIEnabled";
 
 interface Style {
   id: string;
@@ -29,6 +30,8 @@ export default function AdminHomePage() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [tab, setTab] = useState<Tab>("settings");
+
+  const aiEnabled = useAIEnabled();
 
   // AI generate
   const [requirements, setRequirements] = useState("");
@@ -225,6 +228,7 @@ export default function AdminHomePage() {
           </div>
 
           {/* AI Generate */}
+          {aiEnabled && (
           <div className="mt-8">
             <h2 className="text-lg font-semibold mb-4">🤖 AI 生成</h2>
             <div className="space-y-3">
@@ -270,6 +274,7 @@ export default function AdminHomePage() {
               {aiError && <div className="text-sm text-red-500">{aiError}</div>}
             </div>
           </div>
+          )}
         </div>
       )}
 

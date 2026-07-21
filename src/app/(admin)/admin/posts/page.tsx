@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import TagSelector from "@/components/TagSelector";
+import { useAIEnabled } from "@/lib/useAIEnabled";
 
 interface Post {
   id: string;
@@ -29,6 +30,7 @@ export default function PostsPage() {
   const [filter, setFilter] = useState({ categoryId: "", status: "", q: "" });
   const [showCreate, setShowCreate] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const aiEnabled = useAIEnabled();
 
   const fetchPosts = (page = 1) => {
     const params = new URLSearchParams();
@@ -62,12 +64,14 @@ export default function PostsPage() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">帖子管理</h1>
         <div className="flex gap-2">
+          {aiEnabled && (
           <button
             onClick={() => { setShowAI(true); setShowCreate(false); }}
             className="bg-purple-600 text-white px-4 py-2 rounded text-sm hover:bg-purple-700"
           >
             AI 生成
           </button>
+          )}
           <button
             onClick={() => { setShowCreate(true); setShowAI(false); }}
             className="bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700"
@@ -78,7 +82,7 @@ export default function PostsPage() {
       </div>
 
       {/* AI Generate Panel */}
-      {showAI && (
+      {aiEnabled && showAI && (
         <AIGeneratePanel
           categories={categories}
           onDone={() => { setShowAI(false); fetchPosts(); }}

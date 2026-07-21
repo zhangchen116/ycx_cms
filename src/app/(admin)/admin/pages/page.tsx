@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import CodeMirrorEditor from "@/components/CodeMirrorEditor";
+import { useAIEnabled } from "@/lib/useAIEnabled";
 
 interface Page {
   id: string;
@@ -29,6 +30,7 @@ export default function StandalonePagesPage() {
   const [slug, setSlug] = useState("");
   const [loading, setLoading] = useState(false);
   const [homepageId, setHomepageId] = useState<string | null>(null);
+  const aiEnabled = useAIEnabled();
 
   const fetchPages = () =>
     fetch("/api/pages?type=STANDALONE").then((r) => r.json()).then(setPages);
@@ -158,6 +160,7 @@ export default function StandalonePagesPage() {
                       <StandalonePageEditor
                         page={p}
                         styles={styles}
+                        aiEnabled={aiEnabled}
                         onUpdated={fetchPages}
                       />
                       <button
@@ -190,10 +193,12 @@ export default function StandalonePagesPage() {
 function StandalonePageEditor({
   page,
   styles,
+  aiEnabled,
   onUpdated,
 }: {
   page: Page;
   styles: Style[];
+  aiEnabled: boolean;
   onUpdated: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -425,7 +430,7 @@ function StandalonePageEditor({
                     >
                       预览 →
                     </a>
-                    {!aiOpen && (
+                    {aiEnabled && !aiOpen && (
                       <button
                         onClick={() => setAiOpen(true)}
                         className="text-purple-600 text-sm hover:underline"

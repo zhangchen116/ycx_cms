@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAIEnabled } from "@/lib/useAIEnabled";
 
 interface LLMSettings {
   provider: string;
@@ -19,6 +20,7 @@ export default function SettingsPage() {
   const [site, setSite] = useState<SiteSettings>({ domain: "", port: "" });
   const [saved, setSaved] = useState(false);
   const [testing, setTesting] = useState(false);
+  const aiEnabled = useAIEnabled();
 
   useEffect(() => {
     fetch("/api/settings/llm")
@@ -54,6 +56,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold mb-6">设置</h1>
 
       {/* LLM Settings */}
+      {aiEnabled && (
       <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
         <h2 className="text-lg font-semibold mb-4">大模型 API</h2>
         <div className="grid grid-cols-2 gap-4 max-w-xl">
@@ -108,6 +111,7 @@ export default function SettingsPage() {
           {saved && <span className="text-green-600 text-sm">已保存</span>}
         </div>
       </div>
+      )}
 
       {/* Site Settings */}
       <div className="bg-white rounded-lg p-6 shadow-sm mb-6">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { useAIEnabled } from "@/lib/useAIEnabled";
 
 interface User {
   id: string;
@@ -10,16 +11,19 @@ interface User {
   role: string;
 }
 
-const NAV = [
-  { href: "/admin", label: "仪表盘" },
-  { href: "/admin/homepage", label: "首页" },
-  { href: "/admin/categories", label: "分类" },
-  { href: "/admin/pages", label: "独立页" },
-  { href: "/admin/posts", label: "帖子" },
-  { href: "/admin/tags", label: "标签" },
-  { href: "/admin/skills", label: "技能管理" },
-  { href: "/admin/settings", label: "设置" },
-];
+function buildNav(aiEnabled: boolean) {
+  const items = [
+    { href: "/admin", label: "仪表盘" },
+    { href: "/admin/homepage", label: "首页" },
+    { href: "/admin/categories", label: "分类" },
+    { href: "/admin/pages", label: "独立页" },
+    { href: "/admin/posts", label: "帖子" },
+    { href: "/admin/tags", label: "标签" },
+  ];
+  if (aiEnabled) items.push({ href: "/admin/skills", label: "技能管理" });
+  items.push({ href: "/admin/settings", label: "设置" });
+  return items;
+}
 
 interface PluginMenuItem {
   slug: string;
@@ -32,6 +36,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [pluginMenus, setPluginMenus] = useState<PluginMenuItem[]>([]);
+  const aiEnabled = useAIEnabled();
   const router = useRouter();
   const pathname = usePathname();
   const isLogin = pathname === "/admin/login";
@@ -76,7 +81,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <aside className="w-56 bg-white border-r p-4 flex flex-col">
         <div className="text-lg font-bold mb-6">AI CMS</div>
         <nav className="flex-1 space-y-1">
-          {NAV.map((item) => (
+          {buildNav(aiEnabled).map((item) => (
             <Link
               key={item.href}
               href={item.href}

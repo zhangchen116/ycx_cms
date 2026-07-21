@@ -220,6 +220,27 @@ const TOOLS = {
     },
   },
 
+  cms_create_page: {
+    description: "创建独立页面（STANDALONE）。创建后可继续用 cms_upload_page_html 上传 HTML 内容",
+    inputSchema: {
+      type: "object",
+      properties: {
+        title: { type: "string", description: "页面标题" },
+        slug: { type: "string", description: "URL 标识" },
+        content: { type: "string", description: "页面内容（HTML），可选，后续可通过 cms_upload_page_html 上传" },
+        status: { type: "string", enum: ["DRAFT", "PUBLISHED"], default: "DRAFT" },
+      },
+      required: ["title", "slug"],
+    },
+    handler: async (args) => {
+      const page = await api("POST", "/api/pages", {
+        ...args,
+        type: "STANDALONE",
+      });
+      return `✅ 独立页已创建: ${page.title} (id: ${page.id}, slug: ${page.slug})`;
+    },
+  },
+
   cms_upload_media: {
     description: "上传媒体文件（图片）。返回 URL 供 cms_create_post/cms_update_page_html 使用",
     inputSchema: {

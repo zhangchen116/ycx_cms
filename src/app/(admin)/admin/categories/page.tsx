@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import CodeMirrorEditor from "@/components/CodeMirrorEditor";
+import { useAIEnabled } from "@/lib/useAIEnabled";
 
 interface Category {
   id: string;
@@ -26,6 +27,7 @@ export default function CategoriesPage() {
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [loading, setLoading] = useState(false);
+  const aiEnabled = useAIEnabled();
 
   const fetchCategories = () =>
     fetch("/api/categories").then((r) => r.json()).then(setCategories);
@@ -159,6 +161,7 @@ export default function CategoriesPage() {
                       categoryId={c.id}
                       categoryName={c.name}
                       categorySlug={c.slug}
+                      aiEnabled={aiEnabled}
                       onUpdated={fetchCategories}
                     />
                   )}
@@ -194,6 +197,7 @@ function PageEditor({
   categoryId,
   categoryName,
   categorySlug,
+  aiEnabled,
   onUpdated,
 }: {
   pageId: string;
@@ -204,6 +208,7 @@ function PageEditor({
   categoryId: string;
   categoryName: string;
   categorySlug: string;
+  aiEnabled: boolean;
   onUpdated: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -430,7 +435,7 @@ function PageEditor({
                   </div>
 
                   {/* AI Generate */}
-                  {!aiOpen ? (
+                  {aiEnabled && (!aiOpen ? (
                     <button
                       onClick={() => setAiOpen(true)}
                       className="text-purple-600 text-sm hover:underline"
@@ -479,7 +484,7 @@ function PageEditor({
                       )}
                       {aiError && <div className="text-sm text-red-500">{aiError}</div>}
                     </div>
-                  )}
+                  ))}
                 </div>
 
                 <div className="mt-6 flex gap-2 justify-end">

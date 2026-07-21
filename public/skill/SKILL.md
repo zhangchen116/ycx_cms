@@ -167,6 +167,18 @@ CMS 页面支持**动态占位符 HTML**——上传的 HTML 中含有特殊 `da
    }
 ```
 
+### 工作流五：创建新页面
+
+```
+1. cms_create_page(title, slug) → 得到 pageId
+2. cms_get_page_schema              → 了解占位符和示例
+3. cms_get_placeholder_rules				→ 获取插件占位符使用规则
+4. cms_upload_media (可选)           → 上传配图，获取 URL 嵌入模板
+5. 生成 HTML 模板（含 data-cms-*）   → AI 根据站点需求编写模板
+6. cms_upload_page_html(pageId, filePath) → 上传 HTML
+7. cms_render_page(pageId) → 预览效果
+```
+
 ## 注意事项
 
 - 页面 HTML 中的 `data-cms-*` 占位符只在**页面渲染时**替换，上传时原样存储
