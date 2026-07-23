@@ -12,12 +12,12 @@ const updateSchema = z.object({
   title: z.string().min(1).optional(),
   slug: z.string().min(1).optional(),
   content: z.string().min(1).optional(),
-  excerpt: z.string().optional(),
+  excerpt: z.string().nullable().optional(),
   categoryId: z.string().optional(),
   tags: z.string().optional(),
   tagIds: z.array(z.string()).optional(),
   status: z.enum(["DRAFT", "PUBLISHED"]).optional(),
-  extendedParams: z.string().optional(),
+  extendedParams: z.string().nullable().optional(),
 });
 
 export const GET = withLogging(

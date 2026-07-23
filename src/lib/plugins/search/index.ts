@@ -119,153 +119,113 @@ async function handleSearch(req: Request) {
   return NextResponse.json({ results: items });
 }
 
-// ──── 前端占位符渲染 ────
+// ──── 前端全局搜索 API ────
 
-const SEARCH_JS = /* javascript */ `
+const SEARCH_API_JS = /* javascript */ `
 (function() {
-  function init(container) {
-    if (container.hasAttribute('data-cms-init')) return;
-    container.setAttribute('data-cms-init', '');
+  window.CMSSearch = {
+    async search(query, options = {}) {
+      if (!query?.trim()) return [];
+      const limit = Math.min(options.limit ?? 5, 20);
+      const res = await fetch('/api/plugin/search/search?q=' + encodeURIComponent(query.trim()) + '&limit=' + limit);
+      const data = await res.json();
+      return data.results || [];
+    },
 
-    var input = container.querySelector('.search-input');
-    var btn = container.querySelector('.search-btn');
-    var results = container.querySelector('.search-results');
-    if (!input || !btn || !results) return;
+    getPostUrl(post) {
+      return '/' + (post.category?.slug || '') + '/' + post.slug;
+    },
 
-    var minChars = parseInt(container.dataset.minChars || '2');
-    var maxResults = parseInt(container.dataset.maxResults || '5');
-
-    function hide() { results.classList.add('hidden'); }
-    function show() { if (results.children.length) results.classList.remove('hidden'); }
-
-    function render(items) {
-      if (!items.length) {
-        results.innerHTML = '<div class="px-4 py-3 text-sm text-gray-400">未找到相关文章</div>';
-        show();
-        return;
-      }
-      results.innerHTML = items.map(function(item) {
-        var href = '/' + (item.category?.slug || '') + '/' + item.slug;
-        var excerpt = item.excerpt ? item.excerpt.replace(/<[^>]*>/g, '').slice(0, 60) + '...' : '';
-        return '<a href="' + href + '" class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 last:border-0 transition">' +
-          '<div class="text-sm font-medium text-gray-800">' + item.title + '</div>' +
-          (excerpt ? '<div class="text-xs text-gray-400 mt-0.5">' + excerpt + '</div>' : '') +
-        '</a>';
-      }).join('');
-      show();
+    truncateExcerpt(excerpt, maxLength = 60) {
+      return excerpt ? excerpt.replace(/<[^>]*>/g, '').slice(0, maxLength) + '...' : '';
     }
-
-    function doSearch() {
-      var q = input.value.trim();
-      if (q.length < minChars) { hide(); return; }
-      fetch('/api/plugin/search/search?q=' + encodeURIComponent(q) + '&limit=' + maxResults)
-        .then(function(r) { return r.json(); })
-        .then(function(data) { render(data.results || []); })
-        .catch(function() { hide(); });
-    }
-
-    btn.addEventListener('click', doSearch);
-
-    input.addEventListener('keydown', function(e) {
-      if (e.key === 'Enter') { doSearch(); }
-      if (e.key === 'Escape') { hide(); input.blur(); }
-    });
-
-    input.addEventListener('blur', function() { setTimeout(hide, 150); });
-    document.addEventListener('click', function(e) { if (!container.contains(e.target)) hide(); });
-  }
-
-  function sweep() {
-    var els = document.querySelectorAll('.cms-plugin-search:not([data-cms-init])');
-    for (var i = 0; i < els.length; i++) init(els[i]);
-  }
-
-  // 首次加载
-  sweep();
-
-  // 客户端路由导航（Next.js <Link> / router.push）
-  var _push = history.pushState;
-  history.pushState = function() {
-    _push.apply(this, arguments);
-    requestAnimationFrame(function() { requestAnimationFrame(sweep); });
   };
 
-  var _replace = history.replaceState;
-  history.replaceState = function() {
-    _replace.apply(this, arguments);
-    requestAnimationFrame(function() { requestAnimationFrame(sweep); });
-  };
-
-  window.addEventListener('popstate', function() {
-    requestAnimationFrame(function() { requestAnimationFrame(sweep); });
-  });
-
-  // MutationObserver 作为兜底
-  new MutationObserver(function() { sweep(); }).observe(document.body, { childList: true, subtree: true });
+  window.cmsSearch = window.CMSSearch;
 })();
 `;
 
 function renderSearch(_attrs: Record<string, string>, config: Record<string, unknown>): string {
-  const placeholder = (config.placeholder as string) || "搜索文章...";
-  const minChars = config.minChars ?? 2;
-  const maxResults = config.maxResults ?? 5;
-  const theme = (config.theme as string) || "light";
+  const dataAttrs = Object.entries(config)
+    .map(([key, value]) => `data-search-${key}="${value}"`)
+    .join(' ');
 
-  const inputBorder = theme === "dark"
-    ? "border-gray-600 bg-gray-800 text-white placeholder-gray-400"
-    : "border-gray-200 bg-white text-gray-800 placeholder-gray-400";
-  const btnBorder = theme === "dark"
-    ? "border-gray-600 bg-gray-700 text-gray-300 hover:bg-gray-600"
-    : "border-gray-200 bg-white text-gray-400 hover:bg-gray-50 hover:text-gray-600";
-  const resultsBg = theme === "dark" ? "bg-gray-800 border-gray-600" : "bg-white border-gray-200";
-
-  return `
-<div class="cms-plugin cms-plugin-search relative max-w-lg my-4"
-     data-min-chars="${minChars}" data-max-results="${maxResults}">
-  <div class="flex gap-2">
-    <input type="text"
-           class="search-input flex-1 border rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition ${inputBorder}"
-           placeholder="${placeholder}" />
-    <button class="search-btn flex-shrink-0 border rounded-lg px-3 py-2.5 text-sm transition cursor-pointer ${btnBorder}">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-      </svg>
-    </button>
-  </div>
-  <div class="search-results hidden absolute z-50 w-full mt-1 border rounded-lg shadow-lg max-h-80 overflow-y-auto ${resultsBg}"></div>
-</div>`;
+  return `<div class="cms-plugin cms-plugin-search" ${dataAttrs}></div>`;
 }
 
 // ──── 插件入口 ────
 
 export default async function register(_config: Record<string, unknown>) {
-  // ① 启动时构建索引
   await rebuildIndex();
-
-  // ② 注册插件 API 路由
   registerPluginApiRoute("search", "GET", "/search", handleSearch as any);
 
-  // ③ 注册占位符
   add_action("register_placeholders", () => {
     register_placeholder("search", renderSearch, "search",
-      '站内全文搜索框（Orama 引擎，支持中文分词）。\n\n' +
-      '```html\n' +
-      '<div data-cms-plugin="search"></div>\n\n' +
-      '<div data-cms-plugin="search" data-cms-config=\'{"placeholder":"输入关键词...","theme":"dark","minChars":1,"maxResults":8}\'></div>\n' +
+      '站内全文搜索插件（Orama 引擎，支持中文分词）。\n\n' +
+      '插件提供全局 JS API `window.CMSSearch`，UI 完全由用户自定义。\n\n' +
+      '=== 全局 API ===\n' +
+      '```javascript\n' +
+      '// 执行搜索\n' +
+      'const results = await window.CMSSearch.search("关键词", { limit: 10 });\n' +
+      '\n' +
+      '// 获取文章 URL\n' +
+      'const url = window.CMSSearch.getPostUrl(post);\n' +
+      '\n' +
+      '// 简化摘要（去除HTML标签）\n' +
+      'const excerpt = window.CMSSearch.truncateExcerpt(post.excerpt, 60);\n' +
       '```\n\n' +
-      '| 配置项 | 类型 | 默认值 | 说明 |\n' +
-      '|--------|------|--------|------|\n' +
-      '| `placeholder` | string | `"搜索文章..."` | 占位文字 |\n' +
-      '| `minChars` | number | `2` | 最少字符数 |\n' +
-      '| `maxResults` | number | `5` | 最大条数 |\n' +
-      '| `theme` | `"light"` \\| `"dark"` | `"light"` | 颜色主题 |'
+      '=== 返回值结构 ===\n' +
+      '```typescript\n' +
+      'interface SearchResult {\n' +
+      '  title: string;        // 文章标题\n' +
+      '  slug: string;         // 文章 slug\n' +
+      '  excerpt: string;      // 文章摘要\n' +
+      '  category: {\n' +
+      '    slug: string;       // 分类 slug\n' +
+      '    name: string;       // 分类名称\n' +
+      '  };\n' +
+      '  _score: number;       // 匹配分数（0-1）\n' +
+      '}\n' +
+      '```\n\n' +
+      '=== 自定义 UI 示例 ===\n' +
+      '```html\n' +
+      '<style>\n' +
+      '.my-search { max-width: 500px; margin: 1rem auto; }\n' +
+      '.my-input { width: 100%; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 0.5rem; }\n' +
+      '.my-results { margin-top: 0.5rem; border: 1px solid #e5e7eb; }\n' +
+      '.my-result { padding: 0.5rem; border-bottom: 1px solid #f3f4f6; }\n' +
+      '.my-result:last-child { border-bottom: none; }\n' +
+      '</style>\n' +
+      '<div class="my-search">\n' +
+      '  <input type="text" class="my-input" id="search-input" placeholder="搜索文章...">\n' +
+      '  <div class="my-results" id="search-results"></div>\n' +
+      '</div>\n' +
+      '<script>\n' +
+      'document.querySelector("#search-input").addEventListener("input", async function(e) {\n' +
+      '  const q = e.target.value;\n' +
+      '  const results = await window.CMSSearch.search(q, { limit: 5 });\n' +
+      '  const container = document.querySelector("#search-results");\n' +
+      '  if (results.length === 0) {\n' +
+      '    container.innerHTML = "<div class=\'px-4 py-3 text-gray-500\'>未找到相关文章</div>";\n' +
+      '    return;\n' +
+      '  }\n' +
+      '  container.innerHTML = results.map(r => `\n' +
+      '    <a href="${CMSSearch.getPostUrl(r)}" class="my-result">\n' +
+      '      <h4 class="font-medium">${r.title}</h4>\n' +
+      '      <p class="text-sm text-gray-500">${CMSSearch.truncateExcerpt(r.excerpt)}</p>\n' +
+      '    </a>\n' +
+      '  `).join("");\n' +
+      '});\n' +
+      '</script>\n' +
+      '```\n\n' +
+      '=== API 路由 ===\n' +
+      'GET /api/plugin/search/search?q=关键词&limit=5\n' +
+      '返回: { results: SearchResult[] }'
     );
   });
 
-  // ④ 注入前端搜索脚本
-  add_filter("wp_footer", (footer: string) => footer + `<script>${SEARCH_JS}</script>`);
+  add_filter("wp_footer", (footer: string) => footer + `<script>${SEARCH_API_JS}</script>`);
 
-  // ⑤ 文章变更时增量同步索引
   add_action("add_page", async (payload: any) => {
     if (!oramaDB) return;
     const post = payload?.post;
