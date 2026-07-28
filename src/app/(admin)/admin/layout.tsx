@@ -18,6 +18,7 @@ function buildNav(aiEnabled: boolean) {
     { href: "/admin/categories", label: "分类" },
     { href: "/admin/pages", label: "独立页" },
     { href: "/admin/posts", label: "帖子" },
+    { href: "/admin/media", label: "资源媒体" },
     { href: "/admin/tags", label: "标签" },
   ];
   if (aiEnabled) items.push({ href: "/admin/skills", label: "技能管理" });

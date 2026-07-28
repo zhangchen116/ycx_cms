@@ -18,7 +18,7 @@ export const DELETE = withLogging(
   if (!media) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   // Delete file from disk
-  const filePath = join(process.cwd(), "public", media.url);
+  const filePath = join(process.cwd(), media.url);
   await unlink(filePath).catch(() => {});
 
   await prisma.media.delete({ where: { id } });

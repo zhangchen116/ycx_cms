@@ -6,7 +6,7 @@ import { join } from "path";
 import crypto from "crypto";
 import { withLogging } from "@/lib/api-logger";
 
-const UPLOAD_DIR = join(process.cwd(), "public", "uploads");
+const UPLOAD_DIR = join(process.cwd(), "uploads");
 
 export const GET = withLogging(async (req: NextRequest) => {
   const session = await getSessionFromRequest(req);
@@ -38,14 +38,22 @@ export const POST = withLogging(async (req: NextRequest) => {
   if (!file) return NextResponse.json({ error: "No file" }, { status: 400 });
 
   // Validate file type
-  const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+  const allowedTypes = [
+    // 图片
+    "image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml", "image/bmp", "image/avif",
+    // 视频
+    "video/mp4", "video/webm", "video/ogg", "video/quicktime", "video/x-msvideo", "video/x-matroska",
+    // 音频
+    "audio/mpeg", "audio/wav", "audio/ogg", "audio/flac", "audio/aac", "audio/mp4", "audio/webm", "audio/opus",
+  ];
   if (!allowedTypes.includes(file.type)) {
     return NextResponse.json({ error: `Unsupported type: ${file.type}` }, { status: 400 });
   }
 
-  // Validate size (10MB max)
-  if (file.size > 10 * 1024 * 1024) {
-    return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+  // Validate size (200MB max)
+  const maxSize = 200 * 1024 * 1024;
+  if (file.size > maxSize) {
+    return NextResponse.json({ error: "File too large (max 200MB)" }, { status: 400 });
   }
 
   await mkdir(UPLOAD_DIR, { recursive: true });

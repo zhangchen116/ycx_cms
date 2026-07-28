@@ -16,33 +16,23 @@ const updateSchema = z.object({
   status: z.enum(["DRAFT", "PUBLISHED"]).optional(),
 });
 
-export const GET = withLogging(async (req: Request) => {
+export const GET = withLogging(async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const session = await getSessionFromRequest(req);
   if (!session) return getAuthErrorResponse();
 
-  const { searchParams } = new URL(req.url);
-  const categoryId = searchParams.get("categoryId");
+  const { id } = await params;
 
-  if (categoryId) {
-    const page = await prisma.page.findUnique({
-      where: { categoryId },
-      include: {
-        style: { select: { id: true, name: true } },
-        referenceImages: { orderBy: { sortOrder: "asc" } },
-        category: { select: { id: true, name: true, slug: true } },
-      },
-    });
-    return NextResponse.json(page);
-  }
-
-  const pages = await prisma.page.findMany({
+  // GET /api/pages/[id] — 单个页面详情
+  const page = await prisma.page.findUnique({
+    where: { id },
     include: {
-      category: { select: { id: true, name: true, slug: true } },
       style: { select: { id: true, name: true } },
+      referenceImages: { orderBy: { sortOrder: "asc" } },
+      category: { select: { id: true, name: true, slug: true } },
     },
-    orderBy: { createdAt: "desc" },
   });
-  return NextResponse.json(pages);
+  if (!page) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json(page);
 });
 
 export const PATCH = withLogging(
