@@ -171,7 +171,7 @@ export default function MediaPage() {
                     <span className="text-4xl">{getFileIcon(item.mimeType)}</span>
                   )}
                   {/* Hover actions */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto">
                     {isPreviewable(item.mimeType) && (
                       <button
                         onClick={(ev) => { ev.stopPropagation(); setPreviewItem(item); }}
