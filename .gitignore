@@ -45,3 +45,5 @@ mcp/node_modules/
 
 # logs
 /logs/
+dev.db
+uploads

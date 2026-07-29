@@ -94,8 +94,20 @@ export default function MediaPage() {
     await fetchItems();
   };
 
-  const handleCopy = (url: string, id: string) => {
-    navigator.clipboard.writeText(url);
+  const handleCopy = async (url: string, id: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // HTTP 环境不支持 Clipboard API，降级到 execCommand
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 1500);
   };
