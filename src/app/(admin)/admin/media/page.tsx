@@ -96,20 +96,32 @@ export default function MediaPage() {
 
   const handleCopy = async (url: string, id: string) => {
     try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // HTTP 环境不支持 Clipboard API，降级到 execCommand
-      const textarea = document.createElement("textarea");
-      textarea.value = url;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
+      // 生成完整 URL（处理相对路径）
+      const fullUrl = url.startsWith('http') ? url : `${window.location.origin}${url}`;
+      
+      // 优先使用 Clipboard API（HTTPS 环境）
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(fullUrl);
+      } else {
+        // HTTP 环境降级方案
+        const textarea = document.createElement("textarea");
+        textarea.value = fullUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        textarea.style.left = "-9999px";
+        document.body.appendChild(textarea);
+        textarea.focus();
+        textarea.select();
+        const ok = document.execCommand("copy");
+        document.body.removeChild(textarea);
+        if (!ok) throw new Error("复制失败");
+      }
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 1500);
+    } catch (err) {
+      console.error("复制失败:", err);
+      alert("复制失败，请手动复制：" + (url.startsWith('http') ? url : `${window.location.origin}${url}`));
     }
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 1500);
   };
 
   return (
