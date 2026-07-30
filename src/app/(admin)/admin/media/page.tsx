@@ -99,15 +99,15 @@ export default function MediaPage() {
     const useHttps = process.env.USE_HTTPS === 'true';
     
     try {
-      if (useHttps && navigator.clipboard) {
-        await navigator.clipboard.writeText(fullUrl);
-        setCopiedId(id);
-        setTimeout(() => setCopiedId(null), 1500);
-      } else {
+      // if (useHttps && navigator.clipboard) {
+      //   await navigator.clipboard.writeText(fullUrl);
+      //   setCopiedId(id);
+      //   setTimeout(() => setCopiedId(null), 1500);
+      // } else {
         window.prompt('请复制以下 URL：', fullUrl);
         setCopiedId(id);
         setTimeout(() => setCopiedId(null), 1500);
-      }
+      // }
     } catch (err) {
       console.error("复制失败:", err);
       alert('请手动复制 URL：\n' + fullUrl);
