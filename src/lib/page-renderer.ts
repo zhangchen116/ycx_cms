@@ -91,8 +91,13 @@ async function renderPosts(html: string): Promise<string> {
     const where: Record<string, unknown> = { status: "PUBLISHED" };
     if (catSlug) {
       const cat = await prisma.category.findUnique({ where: { slug: catSlug } });
-      if (cat) where.categoryId = cat.id;
-      else continue;
+      if (cat) {
+        where.categoryId = cat.id;
+      }
+      else {
+        result = result.replace(fullMatch, "");
+        continue;
+      }
     }
 
     const posts = await prisma.post.findMany({
